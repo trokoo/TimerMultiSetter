@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>STEAM Timer Pro</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #0f0f0f 0%, #000000 100%);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #ffffff;
+    }
+    header {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    header img {
+      width: 120px;
+      height: auto;
+      filter: drop-shadow(0 0 10px #00ffcc);
+    }
+    .container {
+      text-align: center;
+      max-width: 800px;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 42px;
+      margin-bottom: 20px;
+      color: #00ffff;
+      text-shadow: 0 0 20px #00ffff;
+    }
+    #timer {
+      font-size: 120px;
+      font-weight: bold;
+      margin: 30px 0;
+      color: #00ffcc;
+      text-shadow: 0 0 20px #00ffaa, 0 0 40px #00ffaa;
+    }
+    #message {
+      font-size: 26px;
+      height: 40px;
+      margin-bottom: 40px;
+      transition: all 0.3s ease;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: linear-gradient(145deg, #00ffaa, #00cccc);
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ffaa;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(145deg, #00dddd, #00ffcc);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <header>
+    <img src="/SMC-blanco@4x-1024x350.webp" alt="Logo STEAM Maker" />
+  </header>
+
+  <div class="container">
+    <h1>STEAM Maker Challenge</h1>
+    <div id="timer">00:00</div>
+    <div id="message">Presiona un botón para comenzar</div>
+
+    <div class="btn-group">
+      <button id="startFirst">Iniciar 2:30</button>
+      <button id="startSecond">Iniciar 1:30</button>
+      <button id="startThird">Iniciar 0:30</button>
+      <button id="reset">Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    const timerDisplay = document.getElementById("timer");
+    const messageDisplay = document.getElementById("message");
+    const btnFirst = document.getElementById("startFirst");
+    const btnSecond = document.getElementById("startSecond");
+    const btnThird = document.getElementById("startThird");
+    const btnReset = document.getElementById("reset");
+
+    let interval;
+
+    // Beep más largo (400 ms)
+    function beep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
+      gainNode.gain.setValueAtTime(1, ctx.currentTime);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.9);
+    }
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "es-ES";
+      utter.rate = 1;
+      speechSynthesis.speak(utter);
+    }
+
+    function playStartBeep() {
+      beep();
+    }
+
+    function playEndBeep() {
+      beep();
+    }
+
+    function startTimer(duration, label, onEnd) {
+      clearInterval(interval);
+      let time = duration;
+      timerDisplay.textContent = formatTime(time);
+      messageDisplay.textContent = label;
+
+      interval = setInterval(() => {
+        time--;
+        timerDisplay.textContent = formatTime(time);
+        if (time <= 0) {
+          clearInterval(interval);
+          onEnd();
+        }
+      }, 1000);
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    btnFirst.addEventListener("click", () => {
+      disableAll();
+      speak("Inicia el bloque de dos minutos y treinta segundos.");
+      playStartBeep();
+      startTimer(150, "Contando 2:30 minutos...", () => {
+        messageDisplay.textContent = "¡Primer bloque finalizado!";
+        playEndBeep();
+        speak("Primer bloque finalizado.");
+        enableAll();
+      });
+    });
+
+    btnSecond.addEventListener("click", () => {
+      disableAll();
+      speak("Inicia el bloque de un minuto y treinta segundos.");
+      playStartBeep();
+      startTimer(90, "Contando 1:30 minutos...", () => {
+        messageDisplay.textContent = "¡Segundo bloque finalizado!";
+        playEndBeep();
+        speak("Segundo bloque finalizado.");
+        enableAll();
+      });
+    });
+
+    btnThird.addEventListener("click", () => {
+      disableAll();
+      speak("Inicia el conteo de treinta segundos.");
+      playStartBeep();
+      startTimer(30, "Contando 30 segundos...", () => {
+        messageDisplay.textContent = "¡Tercer bloque finalizado!";
+        playEndBeep();
+        speak("Tiempo completo.");
+        enableAll();
+      });
+    });
+
+    btnReset.addEventListener("click", () => {
+      clearInterval(interval);
+      timerDisplay.textContent = "00:00";
+      messageDisplay.textContent = "Presiona un botón para comenzar";
+      enableAll();
+      speak("Timer reiniciado.");
+    });
+
+    function disableAll() {
+      btnFirst.disabled = true;
+      btnSecond.disabled = true;
+      btnThird.disabled = true;
+    }
+
+    function enableAll() {
+      btnFirst.disabled = false;
+      btnSecond.disabled = false;
+      btnThird.disabled = false;
+    }
+  </script>
+</body>
+</html>
